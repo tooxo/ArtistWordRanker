@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>ArtistWordRanking</title>
+
+    <!-- CSS  -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+</head>
+
+<body>
+<nav class="white" role="navigation">
+    <div class="nav-wrapper container">
+        <a id="logo-container" href="javascript:void(1)" class="brand-logo">ArtistWordRanker</a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="https://github.com/tooxo/ArtistWordRanker" target="_blank">GitHub</a></li>
+        </ul>
+
+        <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+<div id="index-banner" class="parallax-container">
+    <div class="section no-pad-bot">
+        <div class="container">
+            <br>
+            <br>
+            <h1 class="header center teal-text text-lighten-2">ArtistWordRanker</h1>
+            <div class="row center">
+                <h5 class="header col s12 light">Create a wordmap of you fav artist</h5>
+            </div>
+            <div class="row center">
+                <a href="#getting_started" id="download-button"
+                   class="btn-large waves-effect waves-light teal lighten-1">Get Started</a>
+            </div>
+            <br>
+            <br>
+
+        </div>
+    </div>
+    <div class="parallax"><img src="image/concert.jpg" alt="Unsplashed background img 1"></div>
+</div>
+
+<div class="container">
+    <div class="section">
+        <h3>Example Pictures</h3>
+        <div class="carousel" id="example_pictures">
+            <a class="carousel-item" href="image/Migos.png" title="Migos" target="_blank"><img
+                    src="image/Migos.png"></a>
+            <a class="carousel-item" href="image/Arctic-Monkeys.png" target="_blank" title="Arctic Monkeys"><img
+                    src="image/Arctic-Monkeys.png"></a>
+            <a class="carousel-item" href="image/Frank.jpg" target="_blank" title="Frank Ocean"><img
+                    src="image/Frank.jpg"></a>
+            <a class="carousel-item" href="image/Drake.png" target="_blank" title="Drake"><img
+                    src="image/Drake.png"></a>
+        </div>
+    </div>
+</div>
+
+<div class="parallax-container" style="min-height: auto; margin-bottom: 5rem" id="getting_started">
+    <div class="section no-pad-top">
+        <div class="container">
+            <br>
+            <br>
+            <h1 class="header center teal-text text-lighten-2">Getting Started</h1>
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </div>
+    </div>
+    <div class="parallax"><img src="image/string.jpg"
+                               alt="Unsplashed background img 1"></div>
+</div>
+
+<div class="container" id="select_cont">
+    <div class="section">
+        <div class="row" id="search_container">
+            <div class="col s12" style="margin-bottom: 1rem">
+                <nav>
+                    <div class="nav-wrapper">
+                        <div class="col s12">
+                            <a href="#!" style="color: #FFFFFF" class="breadcrumb">Artist Selection</a>
+                            <a href="#!" class="breadcrumb">Image Selection</a>
+                            <a href="#!" style="color: rgba(255, 255, 255, 0.7)" class="breadcrumb">Map Generation</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="input-field col s10">
+                <input id="search_bar" type="text" class="validate">
+                <label for="search_bar">Artist</label>
+            </div>
+            <div class="col s2" style="right: 0%">
+                <a href="#search_container">
+                    <button class="btn waves-effect waves-light" style="margin-top: 1.6rem; width: 100%" type="submit"
+                            name="action"
+                            onclick="search()">Search
+                        <i class="material-icons right">search</i>
+                    </button>
+                </a>
+            </div>
+        </div>
+
+    </div>
+    <div class="section" id="search_results">
+    </div>
+
+    <div class="section" id="image_selection_container" style="display:none">
+        <div class="row">
+            <div class="col s12">
+                <nav>
+                    <div class="nav-wrapper">
+                        <div class="col s12">
+                            <a href="#!" class="breadcrumb">Artist Selection</a>
+                            <a href="#!" style="color: #FFFFFF" class="breadcrumb">Image Selection</a>
+                            <a href="#!" style="color: rgba(255, 255, 255, 0.7)" class="breadcrumb">Map Generation</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <div class="carousel" id="carousel">
+            <center>
+                <h5>Select a prefabricated picture</h5></center>
+        </div>
+        <center>
+            <h5>or</h5></center>
+        <br>
+        <center><a class="waves-effect waves-light btn-large disabled">Upload your own file (Coming Soon)</a></center>
+        <br>
+        <br>
+        <center><a class="waves-effect waves-light btn-large" onclick="submit()">Confirm</a></center>
+
+    </div>
+
+
+</div>
+<div class="parallax-container" style="min-height: auto; display:none" id="patience">
+    <div class="section no-pad-top">
+        <div class="container">
+            <br>
+            <br>
+            <h1 class="header center teal-text text-lighten-2" id="patience_text">Stay Patient</h1>
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </div>
+    </div>
+    <div class="parallax"><img src="image/time.jpg"
+                               alt="Unsplashed background img 1"></div>
+</div>
+<div class="container" id="progress_container" style="display: none">
+    <div class="section ">
+        <div class="row">
+            <div class="col s12">
+                <nav>
+                    <div class="nav-wrapper">
+                        <div class="col s12">
+                            <a href="#!" id="progress_b1" style="color: #FFF" class="breadcrumb">Gathering Lyrics</a>
+                            <a href="#!" id="progress_b2" class="breadcrumb">Creating WordMap</a>
+                            <a href="#!" id="progress_b3" style="color: rgba(255, 255, 255, 0.7);" class="breadcrumb">Done!</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <div class="row" id="progress_c">
+            <div class="col s10">
+                <div class="progress" style="margin: 1rem 0 1rem 0;">
+                    <div id="progress" class="indeterminate" style="width: 70%"></div>
+                </div>
+            </div>
+            <div class="col s2" style="padding-left: unset">
+                <h5 style="margin: unset; text-align: center;" id="progress_text">0%</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="image_box" style="display: none">
+    <div class="section">
+        <div class="row">
+            <div class="col s6">
+                <img class="materialboxed" id="image_preview" style="height: 100%; width: 100%" src="image/Drake.png">
+            </div>
+            <div class="col s6">
+                <a class="waves-effect waves-light btn-large" id="image_download" target="_blank"><i
+                        class="material-icons right">get_app</i>Download</a><br/><br>
+                <a class="waves-effect waves-light btn-large" target="_blank" id="image_open"><i class="material-icons right">open_in_new</i>Open</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="page-footer teal">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+                <h5 class="white-text">About</h5>
+                <p class="grey-text text-lighten-4">lorem ipsum</p>
+            </div>
+            <div class="col l3 s12">
+                <h5 class="white-text">Sources</h5>
+                <ul>
+                    <li><a class="white-text" href="https://covermytunes.com" target="_blank">Album Covers</a></li>
+                    <li><a class="white-text" href="https://genius.com" target="_blank">Lyrics (1)</a></li>
+                    <li><a class="white-text" href="https://lyrics.wikia.com" target="_blank">Lyrics (2)</a></li>
+                    <li><a class="white-text" href="https://pixabay.com/" target="_blank">Images</a></li>
+                </ul>
+            </div>
+            <div class="col l3 s12">
+                <h5 class="white-text">Connect</h5>
+                <ul>
+                    <li><a class="white-text" href="#!">Link 1</a></li>
+                    <li><a class="white-text" href="#!">Link 2</a></li>
+                    <li><a class="white-text" href="#!">Link 3</a></li>
+                    <li><a class="white-text" href="#!">Link 4</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            Created with Materialize.css</a>
+        </div>
+    </div>
+</footer>
+
+<!--  Scripts-->
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="js/init.js"></script>
+
+</body>
+
+</html>

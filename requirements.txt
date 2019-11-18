@@ -1,0 +1,11 @@
+requests
+requests_cache
+numpy
+scipy
+pillow
+wordcloud
+beautifulsoup4
+boto3
+flask
+bjoern
+boto3_type_annotations
