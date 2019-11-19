@@ -33,7 +33,7 @@ let search = function () {
     }
 
     fetch(
-        location.origin+"/api/search", {
+        "api/search", {
             method: "POST",
             body: value
         }
