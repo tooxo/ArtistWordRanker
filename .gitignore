@@ -1,6 +1,7 @@
 b/
 requests.cache.sqlite
 jobs.db
+.env
 
 # Created by https://www.gitignore.io/api/flask,python,pycharm,intellij
 # Edit at https://www.gitignore.io/?templates=flask,python,pycharm,intellij

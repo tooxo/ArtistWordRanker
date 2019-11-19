@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+    web:
+        build: .
+        command: sh -c "cd /home/src/app && python -u server.py"
+        ports:
+            - 8888:8888
+        volumes:
+            - .:/home/src/app/
+        env_file:
+            - .env

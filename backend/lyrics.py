@@ -147,7 +147,7 @@ class Lyrics:
         _lyr = self.get_all_lyrics_of_artist(artist_name=artist, job_id=job_id)
 
         if predefined_image:
-            image_url = image_url.replace("150x150bb", "900x900bb")
+            image_url = image_url.replace("150x150bb", "1200x1200bb")
 
         with requests.get(image_url) as r:
             if r.status_code is not 200 and r.status_code is not 302:

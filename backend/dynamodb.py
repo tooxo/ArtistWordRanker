@@ -1,5 +1,7 @@
 import boto3
+from os import environ
 from boto3_type_annotations.dynamodb import Client
+from PIL import ImageFont
 
 """
 Dynamodb Structure:
@@ -8,11 +10,11 @@ Tables:
     - Lyrics
         - Lyrics grouped by albums keyed with the artist
         - Struct:
-            Artist | Album | Lyrics
+            Artist | Song | Lyrics
     - Album Art
         - Url for all album art by an artist.
         - Struct:
-            Artist | Album | Url
+            Artist | Url
 
 """
 
@@ -20,7 +22,9 @@ Tables:
 class DynamoDB:
     def __init__(self):
         self.dynamo: Client = boto3.client(
-            "dynamodb"  # , endpoint_url="http://localhost:8000"
+            "dynamodb",  # , endpoint_url="http://localhost:8000"
+            aws_access_key_id=environ.get("AWS_CLIENT_ID", ""),
+            aws_secret_access_key=environ.get("AWS_CLIENT_SECRET", ""),
         )
         self.lyrics_table_name = "LYRICS"
         self.album_art_table_name = "ALBUMART"
