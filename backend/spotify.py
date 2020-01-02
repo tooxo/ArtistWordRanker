@@ -6,6 +6,7 @@ import multiprocessing.pool
 from urllib.parse import quote
 import requests_cache
 import os
+import re
 
 requests_cache.install_cache("requests.cache")
 
@@ -124,6 +125,16 @@ class Spotify:
         except KeyError or IndexError as e:
             return None
 
+    @staticmethod
+    def strip_remastered(song_title: str):
+        """
+        Strips the "Remastered - xxxx" from a songs title
+        :param song_title:
+        :return:
+        """
+        regx = r" - Remastered( [\d]{1,4})?"
+        return re.sub(regx, "", song_title)
+
     def get_songs_by_artist(self, artist_name):
         songs = []
         albums = self.get_all_albums(artist_name)
@@ -136,4 +147,10 @@ class Spotify:
         track_tracks = pool.map(self._get_tracks_from_album, _als)
         for track_list in track_tracks:
             songs += track_list
+        b_song = []
+        for song in songs:
+            song_t = self.strip_remastered(song[0])
+            if (song_t, song[1]) not in b_song:
+                b_song.append((song_t, song[1]))
+        songs = list(b_song)
         return songs

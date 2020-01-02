@@ -134,6 +134,8 @@ class DynamoDB:
         except Exception as db:
             return None
 
+        print("returned from cache:", artist_name, album)
+
         return (
             item.get("Item", {"Lyrics": {"S": None}})
             .get("Lyrics", {"S": None})

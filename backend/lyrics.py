@@ -133,7 +133,9 @@ class Lyrics:
                 return response.get("link", "")
 
     def upload_image(self, image: Image, artist_name: str):
-        image_upload_pool = [self.upload_to_img_bb, self.upload_to_imgur]
+        image_upload_pool = [
+            # self.upload_to_img_bb,
+            self.upload_to_imgur]
         base64_e = self.image_to_base64(image)
         return random.choice(image_upload_pool)(base64_e, artist_name)
 

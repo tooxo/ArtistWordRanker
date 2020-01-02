@@ -39,7 +39,7 @@ class LyricsExtractor:
         url = "https://lyrics.fandom.com/wiki/" + search_query
         with requests.get(url=url) as g:
             if g.status_code not in acceptable_codes:
-                raise Exception("")
+                raise Exception(str(g.status_code)+"is not in the available codes.")
             soup = BeautifulSoup(g.text, "html.parser")
             text: Tag = soup.find("div", {"class", "lyricbox"})
             text: str = str(text).replace('<div class="lyricbox">', "").replace(
