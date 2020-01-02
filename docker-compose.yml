@@ -3,7 +3,8 @@ version: '2'
 services:
     web:
         build: .
-        command: sh -c "cd /home/src/app && python -u server.py"
+        working_dir: /usr/src/app/
+        command: python -u server.py
         ports:
             - 8888:8888
         volumes:

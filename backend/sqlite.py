@@ -29,12 +29,14 @@ class SQLite:
             self.database.commit()
 
     def add_job(self, job_id: str):
-        c = self.database.cursor()
+        db = sqlite3.connect("jobs.db")
+        c = db.cursor()
         c.execute(
             "INSERT INTO jobs(ID, LYRICS_GATHERING_STEPS, LYRICS_GATHERING_ALL, LYRICS_GATHERING_DONE, DONE, URL) "
             "VALUES ('" + job_id + "', 0, 0, 'FALSE', 'FALSE', '')"
         )
-        self.database.commit()
+        db.commit()
+        db.close()
 
     def edit_lyrics(self, job_id: str, step: int, _all: int = None, done: bool = False):
         c = self.database.cursor()
@@ -50,14 +52,15 @@ class SQLite:
         if _all is not None:
             c.execute(
                 "UPDATE jobs SET LYRICS_GATHERING_ALL = " + str(_all) + ","
-                "LYRICS_GATHERING_STEPS = " + str(step) + " WHERE ID='" + job_id + "'"
+                                                                        "LYRICS_GATHERING_STEPS = " + str(
+                    step) + " WHERE ID='" + job_id + "'"
             )
             self.database.commit()
             return
 
         c.execute(
             "UPDATE jobs SET LYRICS_GATHERING_STEPS = " + str(step) + " WHERE "
-            "ID='" + job_id + "'"
+                                                                      "ID='" + job_id + "'"
         )
         self.database.commit()
 
@@ -78,10 +81,11 @@ class SQLite:
         self.database.commit()
 
     def get_job(self, job_id: str):
-        c = self.database.cursor()
+        db = sqlite3.connect("jobs.db")
+        c = db.cursor()
         c.execute("SELECT * FROM jobs WHERE ID=?", (job_id,))
         rows = c.fetchall()
-
+        db.close()
         return {
             "ID": rows[0][0],
             "LYRICS_GATHERING_STEPS": rows[0][1],
@@ -90,3 +94,4 @@ class SQLite:
             "DONE": rows[0][4],
             "URL": rows[0][5],
         }
+

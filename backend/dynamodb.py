@@ -1,7 +1,6 @@
 import boto3
 from os import environ
 from boto3_type_annotations.dynamodb import Client
-from PIL import ImageFont
 
 """
 Dynamodb Structure:

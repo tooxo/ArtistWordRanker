@@ -13,6 +13,7 @@ import threading
 import requests
 import io
 import base64
+from queue import Queue
 
 
 class Server:
@@ -23,6 +24,7 @@ class Server:
         self.album_art = AlbumArt()
         self.spotify = Spotify()
         self.sqlite = SQLite()
+        self.word_cloud_queue = Queue(maxsize=10000)
 
     @staticmethod
     def generate_job_id():
@@ -30,6 +32,15 @@ class Server:
         for x in range(0, 63):
             job_id += random.choice(string.ascii_letters)
         return job_id
+
+    def queue_task(self):
+        try:
+            while True:
+                thread: threading.Thread = self.word_cloud_queue.get(block=True)
+                thread.start()
+                thread.join(timeout=30)
+        except (KeyboardInterrupt, SystemExit):
+            pass
 
     def add_routes(self):
         @self.app.route("/api/generate_image", methods=["POST"])
@@ -44,7 +55,7 @@ class Server:
                 target=self.lyrics.artist_to_image,
                 args=(job_id, artist, image_url, predefined_image),
             )
-            t.start()
+            self.word_cloud_queue.put_nowait(t)
             self.sqlite.add_job(job_id)
             return job_id
 
@@ -114,8 +125,12 @@ class Server:
 
     def start_up(self):
         self.sqlite.initiate_database()
-        bjoern.listen(self.app, host="0.0.0.0", port=int(os.environ.get("PORT", 8888)))
-        bjoern.run()
+        threading.Thread(target=self.queue_task).start()
+        if os.environ.get("DEBUG", "False") == "False":
+            bjoern.listen(self.app, host="0.0.0.0", port=int(os.environ.get("PORT", 8888)))
+            bjoern.run()
+        else:
+            self.app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8888)))
 
 
 if __name__ == "__main__":
