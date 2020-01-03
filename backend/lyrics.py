@@ -59,7 +59,8 @@ class Lyrics:
             song = couple[0]
             artist = couple[1]
             lyrics = couple[2]
-            if song is None or artist is None or lyrics is None:
+            if lyrics is None:
+                self.database.insert_lyrics(artist_name=artist, track=song, lyrics="", failed=True)
                 continue
             countable += 1
             self.database.insert_lyrics(artist_name=artist, track=song, lyrics=lyrics)
@@ -149,7 +150,7 @@ class Lyrics:
         _lyr = self.get_all_lyrics_of_artist(artist_name=artist, job_id=job_id)
 
         if predefined_image:
-            image_url = image_url.replace("150x150bb", "1200x1200bb")
+            image_url = image_url.replace("150x150bb", "1100x1100bb")
 
         with requests.get(image_url) as r:
             if r.status_code is not 200 and r.status_code is not 302:

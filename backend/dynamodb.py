@@ -1,7 +1,9 @@
 import boto3
 from os import environ
 from boto3_type_annotations.dynamodb import Client
-
+import string
+import random
+import re
 """
 Dynamodb Structure:
 
@@ -29,6 +31,27 @@ class DynamoDB:
         self.album_art_table_name = "ALBUMART"
 
         self._create_tables_if_not_there()
+
+    @staticmethod
+    def _generate_failed_signature():
+        s = ""
+        for x in range(0, 3):
+            s += random.choice(string.digits)
+        s += "FA"
+        for x in range(0, 3):
+            s += random.choice(string.digits)
+        s += "IL"
+        for x in range(0, 3):
+            s += random.choice(string.digits)
+        s += "ED"
+        for x in range(0, 3):
+            s += random.choice(string.digits)
+        return s
+
+    @staticmethod
+    def _detect_failed_signature(resp: str):
+        regex = r"[\d]{2}FA[\d]{2}IL[\d]{2}ED[\d]{2}"
+        return re.match(regex, resp) is not None
 
     def _create_tables_if_not_there(self):
         """
@@ -77,7 +100,7 @@ class DynamoDB:
             pass
 
     def _check_if_item_exists(
-        self, table_name: str, key: str, value: str, key2: str, value2: str
+            self, table_name: str, key: str, value: str, key2: str, value2: str
     ):
         try:
             item = self.dynamo.get_item(
@@ -94,15 +117,17 @@ class DynamoDB:
             return False
         return True
 
-    def insert_lyrics(self, artist_name: str, track: str, lyrics: str):
+    def insert_lyrics(self, artist_name: str, track: str, lyrics: str, failed=False):
         if artist_name == "" or track == "" or lyrics == "":
             return
+        if failed:
+            lyrics = self._generate_failed_signature()
         if not self._check_if_item_exists(
-            table_name=self.lyrics_table_name,
-            key="Artist",
-            value=artist_name.lower(),
-            key2="Track",
-            value2=track.lower(),
+                table_name=self.lyrics_table_name,
+                key="Artist",
+                value=artist_name.lower(),
+                key2="Track",
+                value2=track.lower(),
         ):
             self.dynamo.put_item(
                 TableName=self.lyrics_table_name,
@@ -113,14 +138,15 @@ class DynamoDB:
                 },
             )
         else:
-            self.dynamo.update_item(
-                TableName=self.lyrics_table_name,
-                Key={
-                    "Artist": {"S": artist_name.lower()},
-                    "Track": {"S": track.lower()},
-                },
-                AttributeUpdates={"Lyrics": {"Value": {"S": lyrics}}},
-            )
+            if not failed:
+                self.dynamo.update_item(
+                    TableName=self.lyrics_table_name,
+                    Key={
+                        "Artist": {"S": artist_name.lower()},
+                        "Track": {"S": track.lower()},
+                    },
+                    AttributeUpdates={"Lyrics": {"Value": {"S": lyrics}}},
+                )
 
     def get_lyrics(self, artist_name: str, album: str):
         try:
@@ -138,8 +164,8 @@ class DynamoDB:
 
         return (
             item.get("Item", {"Lyrics": {"S": None}})
-            .get("Lyrics", {"S": None})
-            .get("S")
+                .get("Lyrics", {"S": None})
+                .get("S")
         )
 
     def get_album_art(self, artist_name: str):
@@ -156,7 +182,7 @@ class DynamoDB:
         if artist == "" or json == "":
             return
         if not self._check_if_item_exists_small(
-            table_name=self.album_art_table_name, key="Artist", value=artist.lower()
+                table_name=self.album_art_table_name, key="Artist", value=artist.lower()
         ):
             self.dynamo.put_item(
                 TableName=self.album_art_table_name,

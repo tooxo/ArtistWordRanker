@@ -33,12 +33,14 @@ class Server:
             job_id += random.choice(string.ascii_letters)
         return job_id
 
+    def start_tuple(self, job_id, artist, image_url, predefined_image):
+        return self.lyrics.artist_to_image(job_id, artist, image_url, predefined_image)
+
     def queue_task(self):
         try:
             while True:
-                thread: threading.Thread = self.word_cloud_queue.get(block=True)
-                thread.start()
-                thread.join(timeout=30)
+                job_id, artist, image_url, predefined_image = self.word_cloud_queue.get(block=True)
+                self.start_tuple(job_id, artist, image_url, predefined_image)
         except (KeyboardInterrupt, SystemExit):
             pass
 
@@ -51,10 +53,7 @@ class Server:
             predefined_image = post_data["predefined_image"]
 
             job_id = self.generate_job_id()
-            t = threading.Thread(
-                target=self.lyrics.artist_to_image,
-                args=(job_id, artist, image_url, predefined_image),
-            )
+            t = (job_id, artist, image_url, predefined_image)
             self.word_cloud_queue.put_nowait(t)
             self.sqlite.add_job(job_id)
             return job_id

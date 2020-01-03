@@ -30,7 +30,7 @@ class LyricsExtractor:
             x += 1
         sqlite.increase_lyrics(job_id)
         print(song_name, artist, "FAILED")
-        return None, None, None
+        return song_name, artist, None
 
     @staticmethod
     def extract_from_lyrics_wikia(song_name: str, artist: str):
