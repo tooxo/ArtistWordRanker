@@ -4,6 +4,7 @@ from boto3_type_annotations.dynamodb import Client
 import string
 import random
 import re
+
 """
 Dynamodb Structure:
 
@@ -100,7 +101,7 @@ class DynamoDB:
             pass
 
     def _check_if_item_exists(
-            self, table_name: str, key: str, value: str, key2: str, value2: str
+        self, table_name: str, key: str, value: str, key2: str, value2: str
     ):
         try:
             item = self.dynamo.get_item(
@@ -123,11 +124,11 @@ class DynamoDB:
         if failed:
             lyrics = self._generate_failed_signature()
         if not self._check_if_item_exists(
-                table_name=self.lyrics_table_name,
-                key="Artist",
-                value=artist_name.lower(),
-                key2="Track",
-                value2=track.lower(),
+            table_name=self.lyrics_table_name,
+            key="Artist",
+            value=artist_name.lower(),
+            key2="Track",
+            value2=track.lower(),
         ):
             self.dynamo.put_item(
                 TableName=self.lyrics_table_name,
@@ -164,8 +165,8 @@ class DynamoDB:
 
         return (
             item.get("Item", {"Lyrics": {"S": None}})
-                .get("Lyrics", {"S": None})
-                .get("S")
+            .get("Lyrics", {"S": None})
+            .get("S")
         )
 
     def get_album_art(self, artist_name: str):
@@ -182,7 +183,7 @@ class DynamoDB:
         if artist == "" or json == "":
             return
         if not self._check_if_item_exists_small(
-                table_name=self.album_art_table_name, key="Artist", value=artist.lower()
+            table_name=self.album_art_table_name, key="Artist", value=artist.lower()
         ):
             self.dynamo.put_item(
                 TableName=self.album_art_table_name,

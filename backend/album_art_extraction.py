@@ -3,15 +3,20 @@ import requests
 from urllib.parse import quote
 import json
 from backend.dynamodb import DynamoDB
+from backend.mongodb import MongoDB
+from os import environ
 
 
 class AlbumArt:
     def __init__(self):
         self.base_url = "https://www.covermytunes.com/search.php?search_query="
-        self.dynamo = DynamoDB()
+        if environ.get("DATABASE", "MONGO") == "MONGO":
+            self.database = MongoDB()
+        else:
+            self.database = DynamoDB()
 
     def get_artist(self, artist_name):
-        temp = self.dynamo.get_album_art(artist_name)
+        temp = self.database.get_album_art(artist_name)
         if temp is not None:
             return temp
         urls = []
@@ -25,7 +30,7 @@ class AlbumArt:
                 if extraction not in urls:
                     urls.append(extraction)
 
-        self.dynamo.insert_album_art(artist_name, self.format_json(urls))
+        self.database.insert_album_art(artist_name, self.format_json(urls))
 
         return self.format_json(urls)
 

@@ -4,13 +4,13 @@ from bs4.element import Tag
 import requests
 import random
 from backend.sqlite import SQLite
+from backend.lyrics_cleanup import LyricsCleanup
 
 acceptable_codes = [200, 301, 302]
 
 
 class LyricsExtractor:
     def __init__(self):
-        pass
         self.sqlite = SQLite()
 
     def extract_random(self, song_name: str, artist: str, job_id: str):
@@ -22,7 +22,11 @@ class LyricsExtractor:
         x = 0
         while x in range(0, 5):
             try:
-                value = (song_name, artist, random.choice(pool)(song_name, artist))
+                value = (
+                    song_name,
+                    artist,
+                    LyricsCleanup.clean_up(random.choice(pool)(song_name, artist)),
+                )
                 sqlite.increase_lyrics(job_id)
                 return value
             except Exception as e:
@@ -39,7 +43,7 @@ class LyricsExtractor:
         url = "https://lyrics.fandom.com/wiki/" + search_query
         with requests.get(url=url) as g:
             if g.status_code not in acceptable_codes:
-                raise Exception(str(g.status_code)+"is not in the available codes.")
+                raise Exception(str(g.status_code) + "is not in the available codes.")
             soup = BeautifulSoup(g.text, "html.parser")
             text: Tag = soup.find("div", {"class", "lyricbox"})
             text: str = str(text).replace('<div class="lyricbox">', "").replace(
