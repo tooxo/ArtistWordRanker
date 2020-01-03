@@ -52,15 +52,14 @@ class SQLite:
         if _all is not None:
             c.execute(
                 "UPDATE jobs SET LYRICS_GATHERING_ALL = " + str(_all) + ","
-                                                                        "LYRICS_GATHERING_STEPS = " + str(
-                    step) + " WHERE ID='" + job_id + "'"
+                "LYRICS_GATHERING_STEPS = " + str(step) + " WHERE ID='" + job_id + "'"
             )
             self.database.commit()
             return
 
         c.execute(
             "UPDATE jobs SET LYRICS_GATHERING_STEPS = " + str(step) + " WHERE "
-                                                                      "ID='" + job_id + "'"
+            "ID='" + job_id + "'"
         )
         self.database.commit()
 
@@ -94,4 +93,3 @@ class SQLite:
             "DONE": rows[0][4],
             "URL": rows[0][5],
         }
-

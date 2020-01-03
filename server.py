@@ -39,7 +39,9 @@ class Server:
     def queue_task(self):
         try:
             while True:
-                job_id, artist, image_url, predefined_image = self.word_cloud_queue.get(block=True)
+                job_id, artist, image_url, predefined_image = self.word_cloud_queue.get(
+                    block=True
+                )
                 self.start_tuple(job_id, artist, image_url, predefined_image)
         except (KeyboardInterrupt, SystemExit):
             pass
@@ -126,7 +128,9 @@ class Server:
         self.sqlite.initiate_database()
         threading.Thread(target=self.queue_task).start()
         if os.environ.get("DEBUG", "False") == "False":
-            bjoern.listen(self.app, host="0.0.0.0", port=int(os.environ.get("PORT", 8888)))
+            bjoern.listen(
+                self.app, host="0.0.0.0", port=int(os.environ.get("PORT", 8888))
+            )
             bjoern.run()
         else:
             self.app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8888)))

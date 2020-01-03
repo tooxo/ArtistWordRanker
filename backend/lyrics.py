@@ -7,16 +7,20 @@ from scipy.ndimage import gaussian_gradient_magnitude
 import requests
 import io
 import base64
-from backend import dynamodb, lyrics_extractor, spotify
+from backend import dynamodb, lyrics_extractor, spotify, mongodb
 import multiprocessing
 import multiprocessing.pool
 from backend.sqlite import SQLite
 import os
+from backend.lyrics_cleanup import LyricsCleanup
 
 
 class Lyrics:
     def __init__(self):
-        self.database = dynamodb.DynamoDB()
+        if os.environ.get("DATABASE", "MONGO") == "MONGO":
+            self.database = mongodb.MongoDB()
+        else:
+            self.database = dynamodb.DynamoDB()
         self.spotify = spotify.Spotify()
         self.lyrics = lyrics_extractor.LyricsExtractor()
         self.sqlite = SQLite()
@@ -60,8 +64,11 @@ class Lyrics:
             artist = couple[1]
             lyrics = couple[2]
             if lyrics is None:
-                self.database.insert_lyrics(artist_name=artist, track=song, lyrics="", failed=True)
+                self.database.insert_lyrics(
+                    artist_name=artist, track=song, lyrics="", failed=True
+                )
                 continue
+            lyrics = LyricsCleanup.clean_up(lyrics)
             countable += 1
             self.database.insert_lyrics(artist_name=artist, track=song, lyrics=lyrics)
             comb += lyrics
@@ -136,7 +143,8 @@ class Lyrics:
     def upload_image(self, image: Image, artist_name: str):
         image_upload_pool = [
             # self.upload_to_img_bb,
-            self.upload_to_imgur]
+            self.upload_to_imgur
+        ]
         base64_e = self.image_to_base64(image)
         return random.choice(image_upload_pool)(base64_e, artist_name)
 
