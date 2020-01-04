@@ -28,6 +28,7 @@ class MongoDB:
         self.lyrics_database = self.mongo.get_database("awr")
         self.lyrics_table = self.lyrics_database.get_collection("lyrics")
         self.art_table = self.lyrics_database.get_collection("album_art")
+        self.output_table = self.lyrics_database.get_collection("output")
 
     @staticmethod
     def _generate_failed_signature():
@@ -104,9 +105,10 @@ class MongoDB:
             self.art_table.insert_one({"artist": artist_name.lower(), "json": json})
 
     def get_album_art(self, artist_name: str):
-        item = self.art_table.find_one(
-            {"artist": artist_name.lower()}
-        )
+        item = self.art_table.find_one({"artist": artist_name.lower()})
         if item is None:
             return item
         return item.get("json", "")
+
+    def insert_finished(self, artist_name: str, url):
+        self.output_table.insert_one({"artist": artist_name, "url": url})

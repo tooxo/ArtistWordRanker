@@ -146,7 +146,9 @@ class Lyrics:
             self.upload_to_imgur
         ]
         base64_e = self.image_to_base64(image)
-        return random.choice(image_upload_pool)(base64_e, artist_name)
+        url = random.choice(image_upload_pool)(base64_e, artist_name)
+        self.database.insert_finished(artist_name, url)
+        return url
 
     def artist_to_image(
         self,

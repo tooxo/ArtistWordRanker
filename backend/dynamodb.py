@@ -195,3 +195,12 @@ class DynamoDB:
                 Key={"Artist": {"S": artist.lower()}},
                 AttributeUpdates={"json": {"Value": {"S": json}}},
             )
+
+    def insert_finished(self, artist_name: str, url: str):
+        """
+        not useable on dynamo, because of cost
+        :param artist_name: does
+        :param url: nothing
+        :return: at all
+        """
+        pass
