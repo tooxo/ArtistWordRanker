@@ -182,7 +182,7 @@ class Lyrics:
         img_mask[edg > 0.05] = 255
 
         wc = WordCloud(
-            max_words=1000,
+            max_words=2000,
             width=img.width,
             height=img.height,
             background_color="white",

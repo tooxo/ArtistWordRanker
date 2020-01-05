@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lyrics_cleanup import LyricsCleanup
+from backend.lyrics_cleanup import LyricsCleanup
 
 
 class Test(unittest.TestCase):
