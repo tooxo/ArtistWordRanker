@@ -200,6 +200,7 @@ class Lyrics:
         mul = 1500 / dim if 1500 > dim else 1
 
         wc = WordCloud(
+            font_path="DroidSansMono.ttf",
             max_words=1500,
             min_font_size=0,
             background_color="white",
