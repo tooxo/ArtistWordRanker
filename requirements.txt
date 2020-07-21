@@ -1,7 +1,8 @@
 pymongo
 requests
 requests_cache
-wordcloud
+# wordcloud
+https://github.com/amueller/word_cloud/archive/1.7.0.tar.gz
 beautifulsoup4
 boto3
 matplotlib
