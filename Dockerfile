@@ -15,5 +15,3 @@ RUN apt-get update && apt-get --no-install-recommends install libjpeg-dev libev-
 
 WORKDIR /usr/src/app/
 COPY . .
-
-ENTRYPOINT ["/usr/bin/dumb-init"]

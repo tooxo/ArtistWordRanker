@@ -98,6 +98,27 @@ class Spotify:
         except KeyError:
             return None
 
+    def get_album_images(self, artist_name):
+        if artist_name == "":
+            return None
+        artist_id = self.research_artist(artist_name)
+        if artist_id is None:
+            return None
+        base_url = (
+                "https://api.spotify.com/v1/artists/"
+                + artist_id
+                + "/albums?country=DE&include_groups=album,single&limit=50"
+        )
+        albums = []
+        with requests.get(url=base_url, headers={"Authorization": f"Bearer {self._request_token()}"}) as re1:
+            for album in re1.json()["items"]:
+                try:
+                    albums.append((album["name"], album["images"][0]["url"]))
+                except (IndexError, KeyError) as e:
+                    pass
+
+        return albums
+
     def get_all_albums(self, artist_name):
         if artist_name == "":
             return None

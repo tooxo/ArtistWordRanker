@@ -8,6 +8,7 @@
 })(jQuery); // end of jQuery name space
 
 let selectedArtist = "";
+let selectedFile = null;
 
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -55,10 +56,10 @@ let search_select = function (context) {
     let artist = context.innerText;
     let search_results = document.getElementById("search_results");
     let children = search_results.children;
-    for (let a in children) {
-        if (typeof children[a] === "object") {
-            if (!children[a].contains(context)) {
-                children[a].style = "display: none;"
+    for (let a of children) {
+        if (typeof a === "object") {
+            if (!a.contains(context)) {
+                a.style = "display: none;"
             }
         }
     }
@@ -71,9 +72,9 @@ let search_select = function (context) {
 let search_back = function () {
     let search_results = document.getElementById("search_results");
     let children = search_results.children;
-    for (let a in children) {
+    for (let a of children) {
         try {
-            children[a].style = ""
+            a.style = ""
 
         } catch (e) {
         }
@@ -151,19 +152,46 @@ let update_frontend = function (json) {
         if (json["DONE"] === "TRUE") {
             let url = json["URL"];
             let ip = document.getElementById("image_preview");
-            ip.src = url;
+            // ip.src = url;
+            let image_download = document.getElementById("image_download");
             let image_box = document.getElementById("image_box");
             let image_open = document.getElementById("image_open");
             let progress_c = document.getElementById("progress_c");
             let pat = document.getElementById("patience_text");
+            let vector_download = document.getElementById("vector_download");
+
+            fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`)
+                .then(response => {
+                    response.json().then(
+                        (text) => {
+                            ip.src = "data:image/svg+xml;charset=utf-8," + text["contents"];
+                        }
+                    )
+                });
+
+            ip.onload = (event) => {
+                let canvas = document.createElement('canvas');
+                let context = canvas.getContext('2d');
+                let regex = /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="([\d.]+)" height="([\d.]+)">/;
+                let result = regex.exec(ip.src);
+                canvas.width = Number.parseInt(result[1]);
+                canvas.height = Number.parseInt(result[2]);
+                context.drawImage(ip, 0, 0);
+                // let myData = context.getImageData(0, 0, 1500, 1500);
+                // let blob = new Blob([myData], {type: "image/jpeg"});
+                image_download.download = "image.png"
+                // image_download.href = window.URL.createObjectURL(blob);
+                image_download.href = canvas.toDataURL();
+            }
+
             pat.innerText = "Done!";
             progress_c.style = "display:none;";
             image_open.href = url;
             image_box.style = "";
-            let image_download = document.getElementById("image_download");
             let base = "api/download?url=";
             let enc = btoa(url);
-            image_download.href = base + enc
+            vector_download.href = base + enc + "&mime=" + btoa("image/svg+xml") + "&ext=svg"
+
         }
     }
 
@@ -188,21 +216,32 @@ let update_check = function (job_id) {
     })
 };
 
-let submit = function () {
+let submit = async function () {
     let url = "";
-    let carousel = document.getElementById("carousel");
-    let children = carousel.children;
-    for (let child in children) {
-        if (typeof children[child] === "object") {
-            if (children[child].classList.contains("active")) {
-                url = children[child].children[0].src;
+    if (selectedFile != null) {
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(",")[1]);
+            reader.onerror = error => reject(error);
+        });
+        url = await toBase64(selectedFile)
+    } else {
+        let carousel = document.getElementById("carousel");
+        let children = carousel.children;
+        for (let child of children) {
+            if (typeof child === "object") {
+                if (child.classList.contains("active")) {
+                    url = child.children[0].src;
+                }
             }
         }
     }
     let d = {
         "artist": selectedArtist,
         "image_url": url,
-        "predefined_image": true
+        "predefined_image": selectedFile == null
     };
     let _doc = JSON.stringify(d);
     document.getElementById("progress_container").style = "";
@@ -218,3 +257,30 @@ let submit = function () {
         })
     })
 };
+
+let fileUpload = function () {
+    let input = document.getElementById("fileInput");
+    input.click();
+}
+
+let fileChanged = function () {
+    let files = document.getElementById("fileInput").files;
+    if (files === undefined) return;
+    if (!["image/jpeg", "image/png"].includes(files[0].type)) return;
+    if (files[0].size > 2000000) return;
+    selectedFile = files[0]
+    document.getElementsByClassName("fileUpload")[0].innerText = selectedFile.name;
+    for (let image of document.getElementById("carousel").querySelectorAll("img")) {
+        image.setAttribute("style", "filter:grayscale(100%);");
+    }
+    document.getElementById("clearButton").setAttribute("style", "");
+}
+
+let fileClear = function () {
+    selectedFile = null;
+    for (let image of document.getElementById("carousel").querySelectorAll("img")) {
+        image.setAttribute("style", "");
+    }
+    document.getElementsByClassName("fileUpload")[0].innerText = "upload your own file";
+    document.getElementById("clearButton").setAttribute("style", "display:none");
+}

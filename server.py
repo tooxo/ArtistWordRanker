@@ -1,4 +1,11 @@
-from flask import Flask, Response, request, redirect, send_file, send_from_directory
+from flask import (
+    Flask,
+    Response,
+    request,
+    redirect,
+    send_file,
+    send_from_directory,
+)
 from backend.lyrics import Lyrics
 from backend.album_art_extraction import AlbumArt
 from backend.spotify import Spotify
@@ -34,14 +41,19 @@ class Server:
         return job_id
 
     def start_tuple(self, job_id, artist, image_url, predefined_image):
-        return self.lyrics.artist_to_image(job_id, artist, image_url, predefined_image)
+        return self.lyrics.artist_to_image(
+            job_id, artist, image_url, predefined_image
+        )
 
     def queue_task(self):
         try:
             while True:
-                job_id, artist, image_url, predefined_image = self.word_cloud_queue.get(
-                    block=True
-                )
+                (
+                    job_id,
+                    artist,
+                    image_url,
+                    predefined_image,
+                ) = self.word_cloud_queue.get(block=True)
                 self.start_tuple(job_id, artist, image_url, predefined_image)
         except (KeyboardInterrupt, SystemExit):
             pass
@@ -66,8 +78,8 @@ class Server:
             job = self.sqlite.get_job(post_data)
             return json.dumps(job)
 
-        @self.app.route("/api/album_art", methods=["POST"])
-        def album_art():
+        #@self.app.route("/api/album_art", methods=["POST"])
+        def album_art_old():
             post_data = request.data.decode()
             artist = self.album_art.get_artist(post_data)
             d = json.loads(artist)
@@ -76,7 +88,22 @@ class Server:
             text = ""
             for image in d:
                 text += backend.generator.carousel_generator(
-                    image["url"], image["title"]
+                    image["url"].replace("100x100bb", "300x300bb"),
+                    image["title"],
+                )
+            return Response(text)
+
+        @self.app.route("/api/album_art", methods=["POST"])
+        def album_art():
+            post_data = request.data.decode()
+            albums = self.spotify.get_album_images(post_data)
+            if not albums:
+                albums = backend.generator.no_image_default
+            text = ""
+            for album in albums:
+                text += backend.generator.carousel_generator(
+                    album[1],
+                    album[0]
                 )
             return Response(text)
 
@@ -98,13 +125,17 @@ class Server:
         @self.app.route("/api/download", methods=["GET"])
         def download_image():
             encoded = request.args.get("url")
+            mime_type = base64.b64decode(
+                request.args.get("mime", "aW1hZ2UvanBlZw==")
+            ).decode()
+            extension = request.args.get("ext", "jpg")
             data = base64.b64decode(encoded)
             with requests.get(url=data) as g:
                 return send_file(
                     io.BytesIO(g.content),
-                    mimetype="image/jpeg",
+                    mimetype=mime_type,
                     as_attachment=True,
-                    attachment_filename="image.jpg",
+                    attachment_filename=f"image.{extension}",
                 )
 
         # -- Frontend --

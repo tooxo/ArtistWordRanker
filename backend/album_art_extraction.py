@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import quote
@@ -9,7 +11,9 @@ from os import environ
 
 class AlbumArt:
     def __init__(self):
-        self.base_url = "https://www.covermytunes.com/search.php?search_query="
+        self.base_url = (
+            "https://itunes.apple.com/search?media=music&limit=50&term="
+        )
         if environ.get("DATABASE", "MONGO") == "MONGO":
             self.database = MongoDB()
         else:
@@ -17,18 +21,20 @@ class AlbumArt:
 
     def get_artist(self, artist_name):
         temp = self.database.get_album_art(artist_name)
-        if temp is not None:
+        if temp:
             return temp
-        urls = []
-        with requests.get(self.base_url + quote(artist_name), verify=False) as g:
-            soup = BeautifulSoup(g.text, "html.parser")
-            divs = soup.find_all("div", {"class": "ProductImage"})
-            for possible_image in divs:
-                description = possible_image.findChildren("a", recursive=True)
-                image = possible_image.findChildren("img", recursive=True)
-                extraction = (description[0]["title"], image[0]["src"])
-                if extraction not in urls:
-                    urls.append(extraction)
+        with requests.get(
+            self.base_url + quote(artist_name), verify=False
+        ) as g:
+            json_response = g.json()["results"]
+            urls = list(
+                OrderedDict.fromkeys(
+                    map(
+                        lambda x: (x["collectionName"], x["artworkUrl100"]),
+                        filter(lambda x: x["kind"] == "song", json_response),
+                    )
+                )
+            )
 
         self.database.insert_album_art(artist_name, self.format_json(urls))
 

@@ -1,4 +1,4 @@
-version: '2'
+version: '2.4'
 
 services:
     web:
@@ -6,6 +6,7 @@ services:
         build: .
         working_dir: /usr/src/app/
         command: python -u server.py
+        init: true
         ports:
             - 8888:8888
         volumes:

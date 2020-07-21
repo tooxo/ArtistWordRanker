@@ -1,4 +1,7 @@
+import os
 import re
+import urllib.parse
+
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import requests
@@ -15,21 +18,26 @@ class LyricsExtractor:
 
     def extract_random(self, song_name: str, artist: str, job_id: str):
         sqlite = SQLite()
-        pool = [
-            LyricsExtractor.extract_from_lyrics_wikia,
-            LyricsExtractor.extract_from_genius,
-        ]
+        if "GENIUS_API_KEY" in os.environ:
+            pool = [LyricsExtractor.extract_from_genius_auth]
+        else:
+            pool = [
+                LyricsExtractor.extract_from_lyrics_wikia,
+                LyricsExtractor.extract_from_genius,
+            ]
         x = 0
-        while x in range(0, 5):
+        while x in range(0, 2):
             try:
                 value = (
                     song_name,
                     artist,
-                    LyricsCleanup.clean_up(random.choice(pool)(song_name, artist)),
+                    LyricsCleanup.clean_up(
+                        random.choice(pool)(song_name, artist)
+                    ),
                 )
                 sqlite.increase_lyrics(job_id)
                 return value
-            except Exception as e:
+            except Exception:
                 pass
             x += 1
         sqlite.increase_lyrics(job_id)
@@ -43,7 +51,9 @@ class LyricsExtractor:
         url = "https://lyrics.fandom.com/wiki/" + search_query
         with requests.get(url=url) as g:
             if g.status_code not in acceptable_codes:
-                raise Exception(str(g.status_code) + "is not in the available codes.")
+                raise Exception(
+                    str(g.status_code) + "is not in the available codes."
+                )
             soup = BeautifulSoup(g.text, "html.parser")
             text: Tag = soup.find("div", {"class", "lyricbox"})
             text: str = str(text).replace('<div class="lyricbox">', "").replace(
@@ -78,3 +88,35 @@ class LyricsExtractor:
             while "  " in text:
                 text = text.replace("  ", " ")
             return text
+
+    @staticmethod
+    def extract_from_genius_auth(song_name: str, artist: str) -> str:
+        # search on genius to extract id
+        base_url_search = "https://genius.com/api/search/song?q="
+        url_search = base_url_search + urllib.parse.quote(
+            re.sub(r"\(.+\)", string=song_name, repl="")
+            + " "
+            + re.sub(r"\(.+\)", string=artist, repl="")
+        )
+        song_id = None
+        with requests.get(url_search) as response_search:
+            search = response_search.json()
+            for cat in search["response"]["sections"]:
+                for item in sorted(
+                    cat["hits"],
+                    key=lambda i: i["result"]["stats"].get("pageviews", 0),
+                    reverse=True,
+                ):
+                    if item["result"]["url"].endswith("lyrics"):
+                        song_id = item["result"]["id"]
+
+        assert song_id is not None
+        base_url_lyrics = f"https://api.genius.com/songs/{song_id}"
+        with requests.get(
+            base_url_lyrics,
+            headers={"Authorization": f"Bearer {os.environ['GENIUS_API_KEY']}"},
+        ) as response_lyrics:
+            lyrics = response_lyrics.json()["response"]["song"]["lyrics"][
+                "dom"
+            ]["children"][0]["children"]
+            return " ".join(filter(lambda x: isinstance(x, str), lyrics))

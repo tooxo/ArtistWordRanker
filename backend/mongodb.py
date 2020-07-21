@@ -106,8 +106,8 @@ class MongoDB:
 
     def get_album_art(self, artist_name: str):
         item = self.art_table.find_one({"artist": artist_name.lower()})
-        if item is None:
-            return item
+        if not item or item.get("json", "") == "[]":
+            return None
         return item.get("json", "")
 
     def insert_finished(self, artist_name: str, url):
