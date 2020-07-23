@@ -78,7 +78,7 @@ class Server:
             job = self.sqlite.get_job(post_data)
             return json.dumps(job)
 
-        #@self.app.route("/api/album_art", methods=["POST"])
+        # @self.app.route("/api/album_art", methods=["POST"])
         def album_art_old():
             post_data = request.data.decode()
             artist = self.album_art.get_artist(post_data)
@@ -97,8 +97,7 @@ class Server:
         def album_art():
             post_data = request.data.decode()
             albums = self.spotify.get_album_images(post_data)
-            if not albums:
-                albums = backend.generator.no_image_default
+            albums.extend(backend.generator.no_image_default)
             text = ""
             for album in albums:
                 text += backend.generator.carousel_generator(
@@ -113,7 +112,8 @@ class Server:
             sea = self.spotify.search_artist(post_data)
             big_insert = (
                 '<a class="waves-effect waves-light btn" '
-                'id="search_back" href="javascript:search_back()" style="display:none">Back</a>'
+                'id="search_back" href="javascript:search_back()" '
+                'style="display:none">Back</a>'
             )
             for artist in sea:
                 insert = backend.generator.search_generator(

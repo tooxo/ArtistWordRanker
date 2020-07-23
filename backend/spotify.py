@@ -50,10 +50,14 @@ class Spotify:
         header = {"Authorization": "Bearer " + token}
         try:
             with requests.get(
-                url=base_url + "?type=artist&limit=1&q=" + quote(artist_name),
-                headers=header,
+                    url=base_url + "?type=artist&limit=5&q=" + quote(
+                        artist_name),
+                    headers=header,
             ) as g:
-                return g.json()["artists"]["items"][0]["id"]
+                return sorted(g.json()["artists"]["items"],
+                              key=lambda x: x["followers"]["total"]
+                              , reverse=True)[0]["id"]
+
         except KeyError:
             return None
 
@@ -63,8 +67,9 @@ class Spotify:
         header = {"Authorization": "Bearer " + token}
         try:
             with requests.get(
-                url=base_url + "?type=artist&limit=10&q=" + quote(query.lower()),
-                headers=header,
+                    url=base_url + "?type=artist&limit=10&q=" + quote(
+                        query.lower()),
+                    headers=header,
             ) as g:
                 d = []
                 for artist in g.json()["artists"]["items"]:
@@ -84,9 +89,9 @@ class Spotify:
     def _get_albums_from_id(self, artist_id):
         token = self._request_token()
         base_url = (
-            "https://api.spotify.com/v1/artists/"
-            + artist_id
-            + "/albums?country=DE&include_groups=album,single&limit=50"
+                "https://api.spotify.com/v1/artists/"
+                + artist_id
+                + "/albums?country=DE&include_groups=album,single&limit=50"
         )
         headers = {"Authorization": "Bearer " + token}
         try:
@@ -110,7 +115,8 @@ class Spotify:
                 + "/albums?country=DE&include_groups=album,single&limit=50"
         )
         albums = []
-        with requests.get(url=base_url, headers={"Authorization": f"Bearer {self._request_token()}"}) as re1:
+        with requests.get(url=base_url, headers={
+            "Authorization": f"Bearer {self._request_token()}"}) as re1:
             for album in re1.json()["items"]:
                 try:
                     albums.append((album["name"], album["images"][0]["url"]))
@@ -131,9 +137,9 @@ class Spotify:
     def _get_tracks_from_album(self, album_id):
         token = self._request_token()
         base_url = (
-            "https://api.spotify.com/v1/albums/"
-            + album_id
-            + "/tracks?limit=50&market=DE"
+                "https://api.spotify.com/v1/albums/"
+                + album_id
+                + "/tracks?limit=50&market=DE"
         )
         headers = {"Authorization": "Bearer " + token}
         try:
