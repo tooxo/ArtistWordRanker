@@ -109,6 +109,7 @@ class LyricsExtractor:
                 ):
                     if item["result"]["url"].endswith("lyrics"):
                         song_id = item["result"]["id"]
+                        break
 
         assert song_id is not None
         base_url_lyrics = f"https://api.genius.com/songs/{song_id}"
