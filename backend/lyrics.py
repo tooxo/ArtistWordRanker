@@ -156,9 +156,16 @@ class Lyrics:
 
     def upload_text(self, svg: str, artist_name: str):
         with requests.post(
-            "https://hastebin.com/documents", data=svg.encode("utf-8")
+            "https://ghostbin.co/paste/new", data={
+                "lang": "text",
+                "text": svg.encode("utf-8"),
+                "expire": "-1",
+                "password": "",
+                "title": "",
+            },
+            allow_redirects=False
         ) as r:
-            url = f"https://hastebin.com/raw/{r.json()['key']}"
+            url = f"https://ghostbin.co{r.headers.get('location')}/raw"
             self.database.insert_finished(artist_name, url)
             return url
 
