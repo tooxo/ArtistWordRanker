@@ -38,7 +38,9 @@ class SQLite:
         db.commit()
         db.close()
 
-    def edit_lyrics(self, job_id: str, step: int, _all: int = None, done: bool = False):
+    def edit_lyrics(
+        self, job_id: str, step: int, _all: int = None, done: bool = False
+    ):
         c = self.database.cursor()
         if done:
             c.execute(
@@ -52,7 +54,11 @@ class SQLite:
         if _all is not None:
             c.execute(
                 "UPDATE jobs SET LYRICS_GATHERING_ALL = " + str(_all) + ","
-                "LYRICS_GATHERING_STEPS = " + str(step) + " WHERE ID='" + job_id + "'"
+                "LYRICS_GATHERING_STEPS = "
+                + str(step)
+                + " WHERE ID='"
+                + job_id
+                + "'"
             )
             self.database.commit()
             return
@@ -75,7 +81,11 @@ class SQLite:
     def set_done(self, job_id: str, url: str):
         c = self.database.cursor()
         c.execute(
-            "UPDATE jobs SET done='TRUE', URL='" + url + "' WHERE ID='" + job_id + "'"
+            "UPDATE jobs SET done='TRUE', URL='"
+            + url
+            + "' WHERE ID='"
+            + job_id
+            + "'"
         )
         self.database.commit()
 

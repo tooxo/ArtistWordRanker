@@ -156,14 +156,15 @@ class Lyrics:
 
     def upload_text(self, svg: str, artist_name: str):
         with requests.post(
-            "https://ghostbin.co/paste/new", data={
+            "https://ghostbin.co/paste/new",
+            data={
                 "lang": "text",
                 "text": svg.encode("utf-8"),
                 "expire": "-1",
                 "password": "",
                 "title": "",
             },
-            allow_redirects=False
+            allow_redirects=False,
         ) as r:
             url = f"https://ghostbin.co{r.headers.get('location')}/raw"
             self.database.insert_finished(artist_name, url)
@@ -184,7 +185,7 @@ class Lyrics:
             img = Image.open(io.BytesIO(base64.b64decode(image_url)))
         else:
             with requests.get(image_url) as r:
-                if r.status_code is not 200 and r.status_code is not 302:
+                if r.status_code not in [200, 302]:
                     raise ConnectionError("Image not found.")
                 img = Image.open(io.BytesIO(r.content))
 
@@ -195,7 +196,7 @@ class Lyrics:
         img_mask = np.copy(img_color)
         img_mask[img_mask.sum(axis=2) == 0] = 255
 
-        edg = np.mean(
+        edg = np.nanmean(
             [
                 gaussian_gradient_magnitude(img_color[:, :, i] / 255.0, 2)
                 for i in range(3)
@@ -223,7 +224,7 @@ class Lyrics:
         wc.generate(text=_lyr)
         img_colors = ImageColorGenerator(img_color)
         wc.recolor(color_func=img_colors)
-        svg = wc.to_svg(embed_font=True, optimize_embedded_font=True)
+        svg = wc.to_svg(embed_font=True, optimize_embedded_font=False)
         url = self.upload_text(svg, artist)
         SQLite().set_done(job_id, url)
         return url

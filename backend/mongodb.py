@@ -60,7 +60,9 @@ class MongoDB:
     def _check_if_album_art_exists(self, artist_name: str):
         return self.art_table.find_one({"artist": artist_name}) is not None
 
-    def insert_lyrics(self, artist_name: str, track: str, lyrics: str, failed=False):
+    def insert_lyrics(
+        self, artist_name: str, track: str, lyrics: str, failed=False
+    ):
         if artist_name == "" or track == "" or lyrics == "":
             return
         if self._check_if_lyric_exists(artist_name, track):
@@ -102,7 +104,9 @@ class MongoDB:
                 {"artist": artist_name.lower()}, {"$set": {"json": json}}
             )
         else:
-            self.art_table.insert_one({"artist": artist_name.lower(), "json": json})
+            self.art_table.insert_one(
+                {"artist": artist_name.lower(), "json": json}
+            )
 
     def get_album_art(self, artist_name: str):
         item = self.art_table.find_one({"artist": artist_name.lower()})

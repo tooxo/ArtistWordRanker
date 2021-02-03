@@ -191,7 +191,6 @@ let update_frontend = function (json) {
             let base = "api/download?url=";
             let enc = btoa(url);
             vector_download.href = base + enc + "&mime=" + btoa("image/svg+xml") + "&ext=svg"
-
         }
     }
 

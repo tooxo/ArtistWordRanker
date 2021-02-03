@@ -105,20 +105,27 @@ class DynamoDB:
     ):
         try:
             item = self.dynamo.get_item(
-                TableName=table_name, Key={key: {"S": value}, key2: {"S": value2}}
+                TableName=table_name,
+                Key={key: {"S": value}, key2: {"S": value2}},
             )
         except Exception as nf:
             return False
         return True
 
-    def _check_if_item_exists_small(self, table_name: str, key: str, value: str):
+    def _check_if_item_exists_small(
+        self, table_name: str, key: str, value: str
+    ):
         try:
-            item = self.dynamo.get_item(TableName=table_name, Key={key: {"S": value}})
+            item = self.dynamo.get_item(
+                TableName=table_name, Key={key: {"S": value}}
+            )
         except Exception as nf:
             return False
         return True
 
-    def insert_lyrics(self, artist_name: str, track: str, lyrics: str, failed=False):
+    def insert_lyrics(
+        self, artist_name: str, track: str, lyrics: str, failed=False
+    ):
         if artist_name == "" or track == "" or lyrics == "":
             return
         if failed:
@@ -183,7 +190,9 @@ class DynamoDB:
         if artist == "" or json == "":
             return
         if not self._check_if_item_exists_small(
-            table_name=self.album_art_table_name, key="Artist", value=artist.lower()
+            table_name=self.album_art_table_name,
+            key="Artist",
+            value=artist.lower(),
         ):
             self.dynamo.put_item(
                 TableName=self.album_art_table_name,

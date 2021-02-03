@@ -6,8 +6,8 @@ def search_generator(artist_name: str, url: str, image: str):
         'alt="" class="circle responsive-img"> </div><div class="col s10"> <a '
         'href="javascript:void(1)" style="font-size: 2em; color: black;" '
         'onclick="search_select(this);" '
-        'onmouseover="this.style.color=\'#83CCC5\'" '
-        'onmouseout="this.style.color=\'black\'">{}'
+        "onmouseover=\"this.style.color='#83CCC5'\" "
+        "onmouseout=\"this.style.color='black'\">{}"
         '</a> </div><a href="{}" target="_blank" class="secondary-content">'
         '<i class="material-icons">open_in_new</i></a> '
         "</div></div></div>".format(image, artist_name, url)
@@ -16,9 +16,9 @@ def search_generator(artist_name: str, url: str, image: str):
 
 
 def carousel_generator(image_url: str, title: str):
-    return '<a class="carousel-item" href="javascript:void(1)"><img src="{}" ' \
-           'title="{}"></a>'.format(
-        image_url, title
+    return (
+        '<a class="carousel-item" href="javascript:void(1)"><img src="{}" '
+        'title="{}"></a>'.format(image_url, title)
     )
 
 
