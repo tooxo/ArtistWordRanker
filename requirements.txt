@@ -12,3 +12,4 @@ boto3_type_annotations
 dnspython
 pillow~=8.1.0
 fonttools
+git+https://github.com/tooxo/api-commons.git
