@@ -78,21 +78,6 @@ class Server:
             job = self.sqlite.get_job(post_data)
             return json.dumps(job)
 
-        # @self.app.route("/api/album_art", methods=["POST"])
-        def album_art_old():
-            post_data = request.data.decode()
-            artist = self.album_art.get_artist(post_data)
-            d = json.loads(artist)
-            if len(d) is 0:
-                d = backend.generator.no_image_default
-            text = ""
-            for image in d:
-                text += backend.generator.carousel_generator(
-                    image["url"].replace("100x100bb", "300x300bb"),
-                    image["title"],
-                )
-            return Response(text)
-
         @self.app.route("/api/album_art", methods=["POST"])
         def album_art():
             post_data = request.data.decode()
@@ -100,10 +85,7 @@ class Server:
             albums.extend(backend.generator.no_image_default)
             text = ""
             for album in albums:
-                text += backend.generator.carousel_generator(
-                    album[1],
-                    album[0]
-                )
+                text += backend.generator.carousel_generator(album[1], album[0])
             return Response(text)
 
         @self.app.route("/api/search", methods=["POST"])
