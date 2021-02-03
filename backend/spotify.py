@@ -3,10 +3,12 @@ import time
 import base64
 import threading
 import multiprocessing.pool
-from urllib.parse import quote
 import requests_cache
 import os
 import re
+
+import api_commons.spotify as spotify
+from typing import List
 
 requests_cache.install_cache("requests.cache")
 
@@ -16,9 +18,12 @@ class Spotify:
         self.client_id = os.environ.get("SPOTIFY_CLIENT", "")
         self.client_secret = os.environ.get("SPOTIFY_SECRET", "")
         self.token = ""
+        self.spotify = spotify.SpotifyApi(
+            client_id=self.client_id, client_secret=self.client_secret
+        )
 
     def _invalidate_token(self):
-        if self.token is not "":
+        if self.token != "":
             for x in range(1, 3000):
                 try:
                     time.sleep(x)
@@ -28,7 +33,7 @@ class Spotify:
             self.token = ""
 
     def _request_token(self):
-        if self.token is "":
+        if self.token == "":
             string = self.client_id + ":" + self.client_secret
             enc = base64.b64encode(string.encode())
             url = "https://accounts.spotify.com/api/token"
@@ -45,63 +50,46 @@ class Spotify:
             return self.token
 
     def research_artist(self, artist_name):
-        token = self._request_token()
-        base_url = "https://api.spotify.com/v1/search"
-        header = {"Authorization": "Bearer " + token}
-        try:
-            with requests.get(
-                    url=base_url + "?type=artist&limit=5&q=" + quote(
-                        artist_name),
-                    headers=header,
-            ) as g:
-                return sorted(g.json()["artists"]["items"],
-                              key=lambda x: x["followers"]["total"]
-                              , reverse=True)[0]["id"]
-
-        except KeyError:
+        artists: List[spotify.Artist] = spotify.search(
+            artist_name,
+            token=self.spotify.get_auth_token(),
+            search_result_count=5,
+            search_type=spotify.SearchType.ARTIST,
+        )
+        if len(artists) == 0:
             return None
+        return sorted(artists, key=lambda x: x.followers, reverse=True)[0].id
 
     def search_artist(self, query: str):
-        token = self._request_token()
-        base_url = "https://api.spotify.com/v1/search"
-        header = {"Authorization": "Bearer " + token}
-        try:
-            with requests.get(
-                    url=base_url + "?type=artist&limit=10&q=" + quote(
-                        query.lower()),
-                    headers=header,
-            ) as g:
-                d = []
-                for artist in g.json()["artists"]["items"]:
-                    try:
-                        n = {
-                            "name": artist["name"],
-                            "url": artist["external_urls"]["spotify"],
-                            "image": artist["images"][0]["url"],
-                        }
-                        d.append(n)
-                    except IndexError:
-                        pass
-            return d
-        except KeyError:
-            return "[]"
+        search_results: List[spotify.Artist] = spotify.search(
+            query,
+            self.spotify.get_auth_token(),
+            search_result_count=10,
+            search_type=spotify.SearchType.ARTIST,
+        )
+        return list(
+            map(
+                lambda x: {
+                    "name": x.name,
+                    "url": x.external_urls.spotify,
+                    "image": x.images[0].url if len(x.images) > 0 else None,
+                },
+                search_results,
+            )
+        )
 
     def _get_albums_from_id(self, artist_id):
-        token = self._request_token()
-        base_url = (
-                "https://api.spotify.com/v1/artists/"
-                + artist_id
-                + "/albums?country=DE&include_groups=album,single&limit=50"
+        return list(
+            map(
+                lambda x: x.id,
+                filter(
+                    lambda y: y.album_type in ["album", "single"],
+                    spotify.Artist.get_albums_by_id(
+                        artist_id, self.spotify.get_auth_token()
+                    ),
+                ),
+            )
         )
-        headers = {"Authorization": "Bearer " + token}
-        try:
-            albums = []
-            with requests.get(url=base_url, headers=headers) as g:
-                for album in g.json()["items"]:
-                    albums.append(album["id"])
-            return albums
-        except KeyError:
-            return None
 
     def get_album_images(self, artist_name):
         if artist_name == "":
@@ -109,21 +97,18 @@ class Spotify:
         artist_id = self.research_artist(artist_name)
         if artist_id is None:
             return None
-        base_url = (
-                "https://api.spotify.com/v1/artists/"
-                + artist_id
-                + "/albums?country=DE&include_groups=album,single&limit=50"
+        return list(
+            map(
+                lambda x: (x.name, x.images[0].url),
+                filter(
+                    lambda y: y.album_type in ["album", "single"]
+                    and len(y.images) > 0,
+                    spotify.Artist.get_albums_by_id(
+                        artist_id, self.spotify.get_auth_token()
+                    ),
+                ),
+            )
         )
-        albums = []
-        with requests.get(url=base_url, headers={
-            "Authorization": f"Bearer {self._request_token()}"}) as re1:
-            for album in re1.json()["items"]:
-                try:
-                    albums.append((album["name"], album["images"][0]["url"]))
-                except (IndexError, KeyError) as e:
-                    pass
-
-        return albums
 
     def get_all_albums(self, artist_name):
         if artist_name == "":
@@ -135,22 +120,14 @@ class Spotify:
         return albums
 
     def _get_tracks_from_album(self, album_id):
-        token = self._request_token()
-        base_url = (
-                "https://api.spotify.com/v1/albums/"
-                + album_id
-                + "/tracks?limit=50&market=DE"
+        return list(
+            map(
+                lambda x: (x.name, x.artists[0].name),
+                spotify.Album.from_id(
+                    album_id, self.spotify.get_auth_token()
+                ).tracks,
+            )
         )
-        headers = {"Authorization": "Bearer " + token}
-        try:
-            tracks = []
-            with requests.get(url=base_url, headers=headers) as g:
-                s = g.json()
-                for song in s["items"]:
-                    tracks.append((song["name"], song["artists"][0]["name"]))
-            return tracks
-        except KeyError or IndexError as e:
-            return None
 
     @staticmethod
     def strip_remastered(song_title: str):
