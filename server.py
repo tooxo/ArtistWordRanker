@@ -40,9 +40,9 @@ class Server:
             job_id += random.choice(string.ascii_letters)
         return job_id
 
-    def start_tuple(self, job_id, artist, image_url, predefined_image):
+    def start_tuple(self, job_id, artist_id, image_url, predefined_image):
         return self.lyrics.artist_to_image(
-            job_id, artist, image_url, predefined_image
+            job_id, artist_id, image_url, predefined_image
         )
 
     def queue_task(self):
@@ -50,11 +50,11 @@ class Server:
             while True:
                 (
                     job_id,
-                    artist,
+                    artist_id,
                     image_url,
                     predefined_image,
                 ) = self.word_cloud_queue.get(block=True)
-                self.start_tuple(job_id, artist, image_url, predefined_image)
+                self.start_tuple(job_id, artist_id, image_url, predefined_image)
         except (KeyboardInterrupt, SystemExit):
             pass
 
@@ -62,12 +62,12 @@ class Server:
         @self.app.route("/api/generate_image", methods=["POST"])
         def image_generation():
             post_data = request.get_json(force=True)
-            artist = post_data["artist"]
+            artist_id = post_data["artist"]
             image_url = post_data["image_url"]
             predefined_image = post_data["predefined_image"]
 
             job_id = self.generate_job_id()
-            t = (job_id, artist, image_url, predefined_image)
+            t = (job_id, artist_id, image_url, predefined_image)
             self.word_cloud_queue.put_nowait(t)
             self.sqlite.add_job(job_id)
             return job_id
@@ -99,7 +99,7 @@ class Server:
             )
             for artist in sea:
                 insert = backend.generator.search_generator(
-                    artist["name"], artist["url"], artist["image"]
+                    artist["name"], artist["url"], artist["image"], artist["id"]
                 )
                 big_insert += insert
             return Response(big_insert)

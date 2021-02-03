@@ -54,6 +54,7 @@ let search = function () {
 
 let search_select = function (context) {
     let artist = context.innerText;
+    let artist_id = context.getAttribute("spotify_id");
     let search_results = document.getElementById("search_results");
     let children = search_results.children;
     for (let a of children) {
@@ -65,8 +66,8 @@ let search_select = function (context) {
     }
     document.getElementById("search_container").style = "display: none;";
     document.getElementById("search_back").style = "";
-    selectedArtist = artist;
-    start_carousel(artist)
+    selectedArtist = artist_id;
+    start_carousel(artist_id)
 };
 
 let search_back = function () {
@@ -85,12 +86,12 @@ let search_back = function () {
     document.getElementById("image_selection_container").style = "display:none;"
 };
 
-let start_carousel = function (artist_name) {
+let start_carousel = function (artist_id) {
     let carousel = document.getElementById("carousel");
     document.getElementById("image_selection_container").style = "";
     fetch("api/album_art", {
         method: "POST",
-        body: artist_name,
+        body: artist_id,
     }).then(response => {
 
         response.text().then(body => {

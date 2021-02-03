@@ -37,8 +37,8 @@ class Lyrics:
     def _multi_helper(self, args):
         return self.lyrics_extractor.extract_random(*args)
 
-    def _get_all_them_lyrics(self, artist_name, job_id):
-        songs = self.spotify.get_songs_by_artist(artist_name)
+    def _get_all_them_lyrics(self, artist_id, job_id):
+        songs = self.spotify.get_songs_by_artist(artist_id)
         sqlite = SQLite()
         sqlite.edit_lyrics(job_id=job_id, step=0, _all=len(songs))
         combo = []
@@ -50,9 +50,9 @@ class Lyrics:
         sqlite.edit_lyrics(job_id, step=len(response), done=True)
         return response, len(songs)
 
-    def get_all_lyrics_of_artist(self, job_id: str, artist_name: str):
+    def get_all_lyrics_of_artist(self, job_id: str, artist_id: str):
         couples, length = self._get_all_them_lyrics(
-            artist_name=artist_name, job_id=job_id
+            artist_id=artist_id, job_id=job_id
         )
 
         countable = 0
@@ -173,11 +173,11 @@ class Lyrics:
     def artist_to_image(
         self,
         job_id: str,
-        artist: str,
+        artist_id: str,
         image_url: str = None,
         predefined_image: bool = False,
     ):
-        _lyr = self.get_all_lyrics_of_artist(artist_name=artist, job_id=job_id)
+        _lyr = self.get_all_lyrics_of_artist(artist_id=artist_id, job_id=job_id)
 
         img = None
         if not predefined_image:
@@ -225,6 +225,6 @@ class Lyrics:
         img_colors = ImageColorGenerator(img_color)
         wc.recolor(color_func=img_colors)
         svg = wc.to_svg(embed_font=True, optimize_embedded_font=False)
-        url = self.upload_text(svg, artist)
+        url = self.upload_text(svg, artist_id)
         SQLite().set_done(job_id, url)
         return url

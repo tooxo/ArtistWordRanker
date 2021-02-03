@@ -51,14 +51,17 @@ class Spotify:
 
     def research_artist(self, artist_name):
         artists: List[spotify.Artist] = spotify.search(
-            artist_name,
+            f'"{artist_name}"',
             token=self.spotify.get_auth_token(),
             search_result_count=5,
             search_type=spotify.SearchType.ARTIST,
         )
         if len(artists) == 0:
             return None
-        return sorted(artists, key=lambda x: x.followers, reverse=True)[0].id
+        return artists[0].id
+        return sorted(
+            artists, key=lambda x: x.followers, reverse=True)
+        [0].id
 
     def search_artist(self, query: str):
         search_results: List[spotify.Artist] = spotify.search(
@@ -70,6 +73,7 @@ class Spotify:
         return list(
             map(
                 lambda x: {
+                    "id": x.id,
                     "name": x.name,
                     "url": x.external_urls.spotify,
                     "image": x.images[0].url if len(x.images) > 0 else None,
@@ -91,18 +95,13 @@ class Spotify:
             )
         )
 
-    def get_album_images(self, artist_name):
-        if artist_name == "":
-            return None
-        artist_id = self.research_artist(artist_name)
-        if artist_id is None:
-            return None
+    def get_album_images(self, artist_id):
         return list(
             map(
                 lambda x: (x.name, x.images[0].url),
                 filter(
                     lambda y: y.album_type in ["album", "single"]
-                    and len(y.images) > 0,
+                              and len(y.images) > 0,
                     spotify.Artist.get_albums_by_id(
                         artist_id, self.spotify.get_auth_token()
                     ),
@@ -110,10 +109,7 @@ class Spotify:
             )
         )
 
-    def get_all_albums(self, artist_name):
-        if artist_name == "":
-            return None
-        artist_id = self.research_artist(artist_name)
+    def get_all_albums(self, artist_id):
         if artist_id is None:
             return None
         albums = self._get_albums_from_id(artist_id)
@@ -139,9 +135,9 @@ class Spotify:
         regx = r" - Remastered( [\d]{1,4})?"
         return re.sub(regx, "", song_title)
 
-    def get_songs_by_artist(self, artist_name):
+    def get_songs_by_artist(self, artist_id):
         songs = []
-        albums = self.get_all_albums(artist_name)
+        albums = self.get_all_albums(artist_id)
         pool = multiprocessing.pool.ThreadPool(processes=3)
         _als = []
         if albums is not None:
