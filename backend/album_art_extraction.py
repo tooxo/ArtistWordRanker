@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-from bs4 import BeautifulSoup
 import requests
 from urllib.parse import quote
 import json
