@@ -107,7 +107,7 @@ class Lyrics:
             response = post.json()
         return response.get("data", {"url", ""}).get("url", "")
 
-    def upload_to_imgur(self, base64_e: str, artist_name: str):
+    def upload_to_imgur(self, base64_e: str):
         """
         Uploads an image to imgur
         :param base64_e:
@@ -123,36 +123,6 @@ class Lyrics:
             response = p.json()
             if response.get("success", False):
                 return response["data"]["link"]
-
-    @staticmethod
-    def upload_to_file_io(base64_e: str, artist_name: str):
-        """
-        Uploads an image to file.io
-        :param base64_e:
-        :param artist_name:
-        :return:
-        """
-        base_url = "https://file.io/?expires=1w"
-        with requests.post(
-            base_url,
-            data={"file": artist_name + ".jpg"},
-            files={
-                "file": (artist_name + ".jpg", base64.decodebytes(base64_e))
-            },
-        ) as p:
-            response = p.json()
-            if response.get("success", False):
-                return response.get("link", "")
-
-    def upload_image(self, image: Image, artist_name: str):
-        image_upload_pool = [
-            # self.upload_to_img_bb,
-            self.upload_to_imgur
-        ]
-        base64_e = self.image_to_base64(image)
-        url = random.choice(image_upload_pool)(base64_e, artist_name)
-        self.database.insert_finished(artist_name, url)
-        return url
 
     def upload_text(self, svg: str, artist_name: str):
         with requests.post(
