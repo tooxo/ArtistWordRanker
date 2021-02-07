@@ -12,7 +12,7 @@ import fastapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from dynamodb import DynamoDB
+# from dynamodb import DynamoDB
 from lyrics import Lyrics
 from mongodb import MongoDB
 from sqlite import SQLite
@@ -24,7 +24,8 @@ app = fastapi.FastAPI()
 if os.environ.get("DATABASE", "MONGO") == "MONGO":
     database = MongoDB()
 else:
-    database = DynamoDB()
+    raise NotImplementedError
+    # database = DynamoDB()
 
 sqlite = loop.run_until_complete(SQLite.create())
 lyrics = Lyrics(sqlite, database)
