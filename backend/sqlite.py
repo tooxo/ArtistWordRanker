@@ -18,23 +18,22 @@ class SQLite:
     @classmethod
     async def create(cls):
         database: aiosqlite.Connection = await aiosqlite.connect("jobs.db")
+        await SQLite.initiate_database(database)
         return cls(database)
 
-    def initiate_database(self):
+    @staticmethod
+    async def initiate_database(database):
         try:
-            c = self.database.cursor()
-            c.execute(
+            c = await database.cursor()
+            await c.execute(
                 "CREATE TABLE jobs (ID TEXT, LYRICS_GATHERING_STEPS INTEGER, "
                 "LYRICS_GATHERING_ALL INTEGER, LYRICS_GATHERING_DONE TEXT, "
                 "DONE TEXT, URL TEXT)"
             )
-            self.database.commit()
         except sqlite3.OperationalError:
-            c = self.database.cursor()
-            c.execute("DELETE FROM jobs;")
-            self.database.commit()
-            c.execute("VACUUM;")
-            self.database.commit()
+            c = await self.database.cursor()
+            await c.execute("DELETE FROM jobs;")
+            await c.execute("VACUUM;")
 
     async def add_job(self, job_id: str):
         c = await self.database.cursor()
