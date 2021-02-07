@@ -21,3 +21,4 @@ aiosqlite~=0.16.1
 aiohttp~=3.6.2
 asyncio-pool
 motor
+aiofiles
