@@ -31,7 +31,7 @@ class SQLite:
                 "DONE TEXT, URL TEXT)"
             )
         except sqlite3.OperationalError:
-            c = await self.database.cursor()
+            c = await database.cursor()
             await c.execute("DELETE FROM jobs;")
             await c.execute("VACUUM;")
 
