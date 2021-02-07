@@ -1,0 +1,25 @@
+<a class="waves-effect waves-light btn"
+   id="search_back" href="javascript:search_back()"
+   style="display:none">Back</a>
+{% for name, url, image, id in inserts %}
+
+<div class="col s12 m8 offset-m2 l6 offset-l3">
+    <div
+            class="card-panel grey lighten-5 z-depth-1">
+        <div class="row valign-wrapper">
+            <div class="col s2"><img src="{{image}}"
+                                     alt="{{name}}" class="circle responsive-img"></div>
+            <div class="col s10"><a
+                    href="javascript:void(1)" style="font-size: 2em; color: black;"
+                    onclick="search_select(this);"
+                    onmouseover="this.style.color='#83CCC5'"
+                    onmouseout="this.style.color='black'" spotify_id="{{id}}">{{name}}
+            </a>
+            </div>
+            <a href="{{url}}" target="_blank" class="secondary-content">
+                <i class="material-icons">open_in_new</i></a>
+        </div>
+    </div>
+</div>
+
+{% endfor %}

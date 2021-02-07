@@ -1,32 +1,25 @@
 import random
 import re
+
+import aiohttp
+from asyncio_pool import AioPool
 from wordcloud import WordCloud, ImageColorGenerator
 from PIL import Image
 import numpy as np
 from scipy.ndimage import gaussian_gradient_magnitude
-import requests
 import io
 import base64
-from backend import dynamodb, lyrics_extractor, spotify, mongodb
-import multiprocessing
-import multiprocessing.pool
+
+from async_helpers import force_async
+from backend import lyrics_extractor, spotify
 from backend.sqlite import SQLite
-import os
-from backend.lyrics_cleanup import LyricsCleanup
 
 
 class Lyrics:
-    def __init__(self):
-        if os.environ.get("DATABASE", "MONGO") == "MONGO":
-            self.database = mongodb.MongoDB()
-        else:
-            self.database = dynamodb.DynamoDB()
+    def __init__(self, sqlite: SQLite, database):
+        self.database = database
         self.spotify = spotify.Spotify()
-        self.lyrics = lyrics_extractor.LyricsExtractor()
-        self.sqlite = SQLite()
-        self.lyrics_extractor = lyrics_extractor.LyricsExtractor()
-        self.api_key_img_bb = os.environ.get("IMG_BB", "")
-        self.api_key_imgur = os.environ.get("IMGUR", "")
+        self.sqlite = sqlite
 
     @staticmethod
     def lyrics_to_words(lyr: str):
@@ -34,45 +27,53 @@ class Lyrics:
         re.sub(r"[^A-Z]", "", lyr)
         return lyr
 
-    def _multi_helper(self, args):
-        return self.lyrics_extractor.extract_random(*args)
+    async def _all_lyrics_helper(self, song, job_id):
+        result = await \
+            lyrics_extractor.LyricsExtractor.extract_from_genius_lib(
+                song[0], song[1])
+        await self.sqlite.increase_lyrics(job_id)
+        return result
 
-    def _get_all_them_lyrics(self, artist_id, job_id):
-        songs = self.spotify.get_songs_by_artist(artist_id)
-        sqlite = SQLite()
-        sqlite.edit_lyrics(job_id=job_id, step=0, _all=len(songs))
-        combo = []
-        for song in songs:
-            t = (song[0], song[1], job_id)
-            combo.append(t)
-        pool = multiprocessing.pool.ThreadPool(processes=10)
-        response = pool.map(self._multi_helper, combo)
-        sqlite.edit_lyrics(job_id, step=len(response), done=True)
-        return response, len(songs)
+    async def _get_all_them_lyrics(self, artist_id, job_id):
+        songs = await self.spotify.get_songs_by_artist(artist_id)
+        await self.sqlite.edit_lyrics(job_id=job_id, step=0, _all=len(songs))
+        futures = []
+        async with AioPool(size=10) as pool:
+            for song in songs:
+                fut = await pool.spawn(
+                    self._all_lyrics_helper(song, job_id))
+                futures.append(fut)
 
-    def get_all_lyrics_of_artist(self, job_id: str, artist_id: str):
-        couples, length = self._get_all_them_lyrics(
+        results = [f.result() for f in futures]
+
+        await self.sqlite.edit_lyrics(job_id, step=len(results), done=True)
+        return results, len(songs)
+
+    async def get_all_lyrics_of_artist(self, job_id: str, artist_id: str):
+        couples, length = await self._get_all_them_lyrics(
             artist_id=artist_id, job_id=job_id
         )
 
         countable = 0
-
         comb = ""
 
+        print("Inserting into Database ...")
+
         for couple in couples:
-            song = couple[0]
-            artist = couple[1]
+            # song = couple[0]
+            # artist = couple[1]
             lyrics = couple[2]
+
             if lyrics is None:
-                self.database.insert_lyrics(
-                    artist_name=artist, track=song, lyrics="", failed=True
-                )
+                # skip using the db for now, it wont be accessed anyways
+                # await self.database.insert_lyrics(
+                #     artist_name=artist, track=song, lyrics="", failed=True
+                # )
                 continue
-            lyrics = LyricsCleanup.clean_up(lyrics)
             countable += 1
-            self.database.insert_lyrics(
-                artist_name=artist, track=song, lyrics=lyrics
-            )
+            # await self.database.insert_lyrics(
+            #     artist_name=artist, track=song, lyrics=lyrics
+            # )
             comb += lyrics
 
         print(countable, "/", length)
@@ -91,73 +92,45 @@ class Lyrics:
         image.save(buffer, format="PNG")
         return base64.b64encode(buffer.getvalue())
 
-    def upload_to_img_bb(self, base64_e: str, artist_name: str):
-        """
-        Uploads an image to img_bb
-        :param base64_e: Base64 representation of image
-        :param artist_name: name of the artist
-        :return: url of the image
-        """
-
-        base_url = "https://api.imgbb.com/1/upload?key="
-        with requests.post(
-            base_url + self.api_key_img_bb,
-            data={"image": base64_e, "name": artist_name},
-        ) as post:
-            response = post.json()
-        return response.get("data", {"url", ""}).get("url", "")
-
-    def upload_to_imgur(self, base64_e: str):
-        """
-        Uploads an image to imgur
-        :param base64_e:
-        :param artist_name: not used
-        :return:
-        """
-        base_url = "https://api.imgur.com/3/upload"
-        with requests.post(
-            url=base_url,
-            data=base64_e,
-            headers={"Authorization": "Client-ID " + self.api_key_imgur},
-        ) as p:
-            response = p.json()
-            if response.get("success", False):
-                return response["data"]["link"]
-
-    def upload_text(self, svg: str, artist_name: str):
-        with requests.post(
+    async def upload_text(self, svg: str, artist_name: str):
+        async with aiohttp.request(
+            "POST",
             "https://ghostbin.co/paste/new",
             data={
                 "lang": "text",
-                "text": svg.encode("utf-8"),
+                "text": svg,  # .encode("utf-8"),
                 "expire": "-1",
                 "password": "",
                 "title": "",
             },
-            allow_redirects=False,
-        ) as r:
+            allow_redirects=False
+        )as r:
+            r: aiohttp.ClientResponse
             url = f"https://ghostbin.co{r.headers.get('location')}/raw"
-            self.database.insert_finished(artist_name, url)
+            # skip for now
+            # await self.database.insert_finished(artist_name, url)
             return url
 
-    def artist_to_image(
+    async def artist_to_image(
         self,
         job_id: str,
         artist_id: str,
         image_url: str = None,
         predefined_image: bool = False,
     ):
-        _lyr = self.get_all_lyrics_of_artist(artist_id=artist_id, job_id=job_id)
+        _lyr = await self.get_all_lyrics_of_artist(artist_id=artist_id,
+                                                   job_id=job_id)
 
         img = None
         if not predefined_image:
             # the image is already there as base64 in image_url
             img = Image.open(io.BytesIO(base64.b64decode(image_url)))
         else:
-            with requests.get(image_url) as r:
-                if r.status_code not in [200, 302]:
+            async with aiohttp.request("GET", image_url) as r:
+                r: aiohttp.ClientResponse
+                if r.status not in [200, 302]:
                     raise ConnectionError("Image not found.")
-                img = Image.open(io.BytesIO(r.content))
+                img = Image.open(io.BytesIO(await r.read()))
 
         assert img is not None
         dim = min(img.size[0], img.size[1])
@@ -191,10 +164,12 @@ class Lyrics:
             scale=mul,
         )
 
-        wc.generate(text=_lyr)
+        await force_async(wc.generate, (), {"text": _lyr})
         img_colors = ImageColorGenerator(img_color)
-        wc.recolor(color_func=img_colors)
-        svg = wc.to_svg(embed_font=True, optimize_embedded_font=False)
-        url = self.upload_text(svg, artist_id)
-        SQLite().set_done(job_id, url)
+        await force_async(wc.recolor, (), {"color_func": img_colors})
+        svg = await force_async(wc.to_svg, (),
+                                {"embed_font": True,
+                                 "optimize_embedded_font": False})
+        url = await self.upload_text(svg, artist_id)
+        await self.sqlite.set_done(job_id, url)
         return url

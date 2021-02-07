@@ -3,20 +3,14 @@ from collections import OrderedDict
 import requests
 from urllib.parse import quote
 import json
-from backend.dynamodb import DynamoDB
-from backend.mongodb import MongoDB
-from os import environ
 
 
 class AlbumArt:
-    def __init__(self):
+    def __init__(self, database):
         self.base_url = (
             "https://itunes.apple.com/search?media=music&limit=50&term="
         )
-        if environ.get("DATABASE", "MONGO") == "MONGO":
-            self.database = MongoDB()
-        else:
-            self.database = DynamoDB()
+        self.database = database
 
     def get_artist(self, artist_name):
         temp = self.database.get_album_art(artist_name)

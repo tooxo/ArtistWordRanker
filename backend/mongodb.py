@@ -1,4 +1,4 @@
-import pymongo
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from os import environ
 import random
 import string
@@ -23,12 +23,18 @@ Tables:
 class MongoDB:
     def __init__(self):
         mongo_connection_string = environ.get("MONGO_CONNECTION_STRING", "")
-        self.mongo = pymongo.MongoClient(mongo_connection_string)
+        self.mongo = AsyncIOMotorClient(mongo_connection_string)
 
-        self.lyrics_database = self.mongo.get_database("awr")
-        self.lyrics_table = self.lyrics_database.get_collection("lyrics")
-        self.art_table = self.lyrics_database.get_collection("album_art")
-        self.output_table = self.lyrics_database.get_collection("output")
+        self.lyrics_database = self.mongo.awr
+        self.lyrics_table: AsyncIOMotorCollection = \
+            self.lyrics_database.get_collection(
+                "lyrics")
+        self.art_table: AsyncIOMotorCollection = \
+            self.lyrics_database.get_collection(
+                "album_art")
+        self.output_table: AsyncIOMotorCollection = \
+            self.lyrics_database.get_collection(
+                "output")
 
     @staticmethod
     def _generate_failed_signature():
@@ -51,23 +57,29 @@ class MongoDB:
         regex = r"[\d]{2}FA[\d]{2}IL[\d]{2}ED[\d]{2}"
         return re.match(regex, resp) is not None
 
-    def _check_if_lyric_exists(self, artist_name: str, track: str):
+    async def _check_if_lyric_exists(self, artist_name: str, track: str):
         return (
-            self.lyrics_table.find_one({"artist": artist_name, "track": track})
+            await self.lyrics_table.find_one(
+                {"artist": artist_name, "track": track}
+            )
             is not None
         )
 
-    def _check_if_album_art_exists(self, artist_name: str):
-        return self.art_table.find_one({"artist": artist_name}) is not None
+    async def _check_if_album_art_exists(self, artist_name: str):
+        return (
+                   await self.art_table.find_one(
+                       {"artist": artist_name}
+                   )
+               ) is not None
 
-    def insert_lyrics(
+    async def insert_lyrics(
         self, artist_name: str, track: str, lyrics: str, failed=False
     ):
         if artist_name == "" or track == "" or lyrics == "":
             return
-        if self._check_if_lyric_exists(artist_name, track):
+        if await self._check_if_lyric_exists(artist_name, track):
             if failed:
-                self.lyrics_table.insert_one(
+                await self.lyrics_table.insert_one(
                     {
                         "artist": artist_name.lower(),
                         "track": track.lower(),
@@ -75,12 +87,12 @@ class MongoDB:
                     }
                 )
                 return
-            self.lyrics_table.find_one_and_update(
+            await self.lyrics_table.find_one_and_update(
                 {"artist": artist_name.lower(), "track": track.lower()},
                 {"$set": {"lyrics": lyrics}},
             )
         else:
-            self.lyrics_table.insert_one(
+            await self.lyrics_table.insert_one(
                 {
                     "artist": artist_name.lower(),
                     "track": track.lower(),
@@ -88,31 +100,31 @@ class MongoDB:
                 }
             )
 
-    def get_lyrics(self, artist_name: str, track: str):
-        item = self.lyrics_table.find_one(
+    async def get_lyrics(self, artist_name: str, track: str):
+        item = await self.lyrics_table.find_one(
             {"artist": artist_name.lower(), "track": track.lower()}
         )
         if item is None:
             return item
         return item.get("lyrics", "")
 
-    def insert_album_art(self, artist_name: str, json: str):
+    async def insert_album_art(self, artist_name: str, json: str):
         if artist_name == "" or json == "":
             return
-        if self._check_if_album_art_exists(artist_name.lower()):
-            self.art_table.find_one_and_update(
+        if await self._check_if_album_art_exists(artist_name.lower()):
+            await self.art_table.find_one_and_update(
                 {"artist": artist_name.lower()}, {"$set": {"json": json}}
             )
         else:
-            self.art_table.insert_one(
+            await self.art_table.insert_one(
                 {"artist": artist_name.lower(), "json": json}
             )
 
-    def get_album_art(self, artist_name: str):
-        item = self.art_table.find_one({"artist": artist_name.lower()})
+    async def get_album_art(self, artist_name: str):
+        item = await self.art_table.find_one({"artist": artist_name.lower()})
         if not item or item.get("json", "") == "[]":
             return None
         return item.get("json", "")
 
-    def insert_finished(self, artist_name: str, url):
-        self.output_table.insert_one({"artist": artist_name, "url": url})
+    async def insert_finished(self, artist_name: str, url):
+        await self.output_table.insert_one({"artist": artist_name, "url": url})
