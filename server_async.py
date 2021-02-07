@@ -13,10 +13,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # from dynamodb import DynamoDB
-from lyrics import Lyrics
-from mongodb import MongoDB
-from sqlite import SQLite
-from spotify import Spotify
+from backend.lyrics import Lyrics
+from backend.mongodb import MongoDB
+from backend.sqlite import SQLite
+from backend.spotify import Spotify
 
 loop = asyncio.new_event_loop()
 app = fastapi.FastAPI()

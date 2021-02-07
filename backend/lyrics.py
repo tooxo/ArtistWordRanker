@@ -10,7 +10,7 @@ from scipy.ndimage import gaussian_gradient_magnitude
 import io
 import base64
 
-from async_helpers import force_async
+from backend.async_helpers import force_async
 from backend import lyrics_extractor, spotify
 from backend.sqlite import SQLite
 
