@@ -1,11 +1,8 @@
-import requests_cache
 import os
 import re
 
 import api_commons.spotify as spotify
 from typing import List
-
-requests_cache.install_cache("requests.cache")
 
 
 class Spotify:

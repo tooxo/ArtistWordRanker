@@ -33,7 +33,8 @@ class SQLite:
         except sqlite3.OperationalError:
             c = await database.cursor()
             await c.execute("DELETE FROM jobs;")
-            await c.execute("VACUUM;")
+            # await c.execute("VACUUM;")
+            # await database.execute("VACUUM;")
 
     async def add_job(self, job_id: str):
         c = await self.database.cursor()
