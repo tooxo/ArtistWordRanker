@@ -14,11 +14,12 @@ pillow~=8.1.0
 fonttools
 git+https://github.com/tooxo/api-commons.git
 python-dateutil
-typing~=3.7.4.1
+# typing~=3.7.4.1
 fastapi~=0.61.2
 uvicorn~=0.13.3
 aiosqlite~=0.16.1
 aiohttp~=3.6.2
 asyncio-pool
+chardet<4.0.0
 motor
-aiofiles
+aiofiles~=0.6.0
