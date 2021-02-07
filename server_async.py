@@ -147,7 +147,8 @@ async def download_image(request: fastapi.Request):
 if __name__ == "__main__":
     server = uvicorn.Server(
         uvicorn.Config(
-            app, host="0.0.0.0", port=8888, loop="asyncio", debug=True,
+            app, host="0.0.0.0", port=int(os.environ.get("PORT", "8888")),
+            loop="asyncio", debug=True,
             reload=True
         )
     )
