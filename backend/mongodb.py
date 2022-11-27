@@ -21,8 +21,8 @@ Tables:
 
 
 class MongoDB:
-    def __init__(self):
-        mongo_connection_string = environ.get("MONGO_CONNECTION_STRING", "")
+    def __init__(self, connection_string: str):
+        mongo_connection_string = connection_string
         self.mongo = AsyncIOMotorClient(mongo_connection_string)
 
         self.lyrics_database = self.mongo.awr

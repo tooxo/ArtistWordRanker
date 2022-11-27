@@ -22,7 +22,7 @@ loop = asyncio.new_event_loop()
 app = fastapi.FastAPI()
 
 if os.environ.get("DATABASE", "MONGO") == "MONGO":
-    database = MongoDB()
+    database = MongoDB(os.environ.get("MONGO_CONNECTION_STRING", ""))
 else:
     raise NotImplementedError
     # database = DynamoDB()
@@ -148,8 +148,7 @@ if __name__ == "__main__":
     server = uvicorn.Server(
         uvicorn.Config(
             app, host="0.0.0.0", port=int(os.environ.get("PORT", "8888")),
-            loop="asyncio", debug=True,
-            reload=True
+            loop="asyncio", reload=True
         )
     )
     loop.run_until_complete(server.serve())

@@ -13,10 +13,11 @@ import base64
 from backend.async_helpers import force_async
 from backend import lyrics_extractor, spotify
 from backend.sqlite import SQLite
+from .mongodb import MongoDB
 
 
 class Lyrics:
-    def __init__(self, sqlite: SQLite, database):
+    def __init__(self, sqlite: SQLite, database: MongoDB):
         self.database = database
         self.spotify = spotify.Spotify()
         self.sqlite = sqlite
@@ -28,9 +29,13 @@ class Lyrics:
         return lyr
 
     async def _all_lyrics_helper(self, song, job_id):
-        result = await \
-            lyrics_extractor.LyricsExtractor.extract_from_genius_lib(
-                song[0], song[1])
+        db_result = await self.database.get_lyrics(song[1], song[0])
+        if db_result is not None:
+            result = song[1], song[0], db_result
+        else:
+            result = await \
+                lyrics_extractor.LyricsExtractor.extract_from_genius_lib(
+                    song[0], song[1])
         await self.sqlite.increase_lyrics(job_id)
         return result
 
@@ -60,8 +65,8 @@ class Lyrics:
         print("Inserting into Database ...")
 
         for couple in couples:
-            # song = couple[0]
-            # artist = couple[1]
+            song = couple[0]
+            artist = couple[1]
             lyrics = couple[2]
 
             if lyrics is None:
@@ -71,9 +76,9 @@ class Lyrics:
                 # )
                 continue
             countable += 1
-            # await self.database.insert_lyrics(
-            #     artist_name=artist, track=song, lyrics=lyrics
-            # )
+            await self.database.insert_lyrics(
+                artist_name=artist, track=song, lyrics=lyrics
+            )
             comb += lyrics
 
         print(countable, "/", length)
@@ -95,7 +100,7 @@ class Lyrics:
     async def upload_text(self, svg: str, artist_name: str):
         async with aiohttp.request(
             "POST",
-            "https://ghostbin.co/paste/new",
+            "https://www.klgrth.io/paste/new",
             data={
                 "lang": "text",
                 "text": svg,  # .encode("utf-8"),
@@ -104,9 +109,9 @@ class Lyrics:
                 "title": "",
             },
             allow_redirects=False
-        )as r:
+        ) as r:
             r: aiohttp.ClientResponse
-            url = f"https://ghostbin.co{r.headers.get('location')}/raw"
+            url = f"https://www.klgrth.io{r.headers.get('location')}/raw"
             # skip for now
             # await self.database.insert_finished(artist_name, url)
             return url
