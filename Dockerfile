@@ -13,8 +13,6 @@ RUN apt-get update && apt-get --no-install-recommends install libjpeg-dev libev-
     && apt-get autoremove -y \
     && apt-get clean
 
-
-
 WORKDIR /usr/src/app/
 COPY . .
-CMD ["python3", "server_async.py"]
+CMD ["/bin/bash", "-c", "export $(grep -v '^#' .env | xargs -d '\n') && python3 server_async.py"]
