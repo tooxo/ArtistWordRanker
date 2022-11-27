@@ -23,7 +23,11 @@ Tables:
 class MongoDB:
     def __init__(self, connection_string: str):
         mongo_connection_string = connection_string
-        self.mongo = AsyncIOMotorClient(mongo_connection_string)
+        try:
+            self.mongo = AsyncIOMotorClient(mongo_connection_string)
+        except Exception:
+            print("N")
+            print(mongo_connection_string)
 
         self.lyrics_database = self.mongo.awr
         self.lyrics_table: AsyncIOMotorCollection = \
