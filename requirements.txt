@@ -3,7 +3,7 @@ matplotlib
 scipy==1.9.3
 numpy==1.23.5
 dnspython
-pillow==9.3.0
+pillow==10.0.1
 fonttools
 git+https://github.com/tooxo/api-commons.git
 python-dateutil
